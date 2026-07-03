@@ -26,7 +26,9 @@ git init -b main && git add -A && git commit -m "sandbox"
 gh repo create <owner>/trunkbased-sandbox --private --source=. --push
 
 # 2. configure environments + rulesets + merge queue
-scripts/setup.sh <owner>/trunkbased-sandbox
+#    (run via `bash` so no execute bit is needed after unzip)
+bash scripts/setup.sh <owner>/trunkbased-sandbox
+# — or make it executable first:  chmod +x scripts/setup.sh && ./scripts/setup.sh <owner>/trunkbased-sandbox
 
 # 3. in the UI: allow squash-only, add required reviewers to qa/prod,
 #    (optional) set RUNNER_LABELS = ["self-hosted","aca","linux"]
