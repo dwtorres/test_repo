@@ -1,0 +1,39 @@
+name: Deploy (dummy, reusable)
+on:
+  workflow_call:
+    inputs:
+      environment: { required: true,  type: string }
+      git_ref:     { required: false, type: string, default: "" }
+      apply:       { required: false, type: boolean, default: false }
+
+jobs:
+  deploy:
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["ubuntu-latest"]') }}
+    environment: ${{ inputs.environment }}   # qa/prod reviewer approval fires HERE
+    permissions:
+      id-token: write
+      contents: read
+    concurrency:
+      group: deploy-${{ inputs.environment }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.git_ref }}
+
+      - name: Component 1 — bundle deploy (dummy)
+        run: |
+          echo "env=${{ inputs.environment }}  ref=${{ inputs.git_ref || 'triggering ref' }}  apply=${{ inputs.apply }}"
+          echo "would run: databricks bundle validate -t ${{ inputs.environment }}"
+          echo "would run: databricks bundle deploy   -t ${{ inputs.environment }} --auto-approve"
+
+      - name: Component 2 — git-folder update (dummy)
+        run: |
+          if [ "${{ inputs.environment }}" = "prod" ]; then
+            echo "would run: databricks repos update /Workspace/prod --tag ${{ inputs.git_ref || 'vX.Y.Z' }}"
+          else
+            echo "would run: databricks repos update /Workspace/${{ inputs.environment }} --branch main"
+          fi
+
+      - name: Smoke check (dummy)
+        run: echo "smoke OK for ${{ inputs.environment }}"

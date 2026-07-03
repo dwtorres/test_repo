@@ -1,0 +1,53 @@
+name: CI
+# Runs on PRs AND in the merge queue (merge_group) — the CI Gate job below is the
+# single required status check. Add a file named BREAK to a PR to watch it block.
+on:
+  pull_request:
+  merge_group:          # REQUIRED so the merge queue can report the check
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["ubuntu-latest"]') }}
+    steps:
+      - uses: actions/checkout@v7
+      - run: echo "lint OK (dummy)"
+
+  unit:
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["ubuntu-latest"]') }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Unit (fails if a BREAK file is present)
+        run: |
+          if [ -f BREAK ]; then
+            echo "::error::BREAK file present — failing on purpose to test the gate."
+            exit 1
+          fi
+          echo "unit OK (dummy)"
+
+  build:
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["ubuntu-latest"]') }}
+    steps:
+      - uses: actions/checkout@v7
+      - run: echo "build OK (dummy)"
+
+  ci-gate:
+    name: CI Gate                       # <-- make THIS the required check in the ruleset
+    if: always()
+    needs: [lint, unit, build]
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["ubuntu-latest"]') }}
+    steps:
+      - name: Aggregate results
+        run: |
+          echo '${{ toJSON(needs) }}'
+          if echo '${{ toJSON(needs) }}' | grep -Eq '"result": *"(failure|cancelled)"'; then
+            echo "::error::A required job failed."; exit 1
+          fi
+          echo "CI Gate passed."

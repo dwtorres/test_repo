@@ -1,0 +1,3 @@
+# Required-review-from-code-owners is enforced by the branch ruleset.
+# Replace with a real team (or your own handle) so PR reviews route.
+*   @your-org/your-team
